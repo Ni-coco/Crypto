@@ -25,51 +25,34 @@ public class frame extends JFrame implements ActionListener {
     List<String> crypto = getCrypto();
     List<Double> next = getNext();
     List<ImageIcon> img = getImg();
-    JFrame win = new JFrame("Crypto prices");
-    JPanel[] pn = new JPanel[2];
+    JFrame win = new JFrame("Crypto prices"); //frame
+    /* Related to Menu */
+    JPanel Menu = new JPanel();
+    JButton Bmarket = new JButton("Market");
+    JButton Btrading = new JButton("Trading");
+    /* Related to MarketFrame */
+    JPanel MarketFrame = new JPanel();
+    JPanel pnPrice = new JPanel();
     JLabel[] coins = new JLabel[6];
-    JButton refresh = new JButton("Refresh");
+    /* Related to TradingFrame */
+    JPanel TradingFrame = new JPanel();
+    JPanel[] pnTrading = new JPanel[2];
+
 
     public frame() {
 
-        /* Set frame */
-        win.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        win.setPreferredSize(new Dimension(1080, 720));
-        win.setVisible(true);
-        win.setLayout(new BorderLayout());
-        refresh.addActionListener(this);
+        setMenu();
+        setFrame();
+        setMarketFrame();
 
-        /* set Panels */
-        for (int i = 0; i < pn.length; i++)
-            pn[i] = new JPanel();
-        pn[0].setLayout(new FlowLayout());
-        pn[0].setBackground(Color.WHITE);
-        pn[1].setLayout(new GridBagLayout());
-        pn[1].setBackground(Color.BLACK);
-
-        /* Icon and Prices of Cryptocurrency */
-        for (int i = 0; i < crypto.size(); i++) {
-            coins[i] = new JLabel();
-            coins[i].setIcon(img.get(i));
-            coins[i].setForeground(Color.GREEN);
-            coins[i].setIconTextGap(20);
-            coins[i].setFont(new Font("Arial", Font.BOLD, 20));
-        }
-
-        /* Adding Components to Panels */
-        pn[0].add(refresh);
-        GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(50, 50, 100, 50);
-        for (int i = 0; i < crypto.size(); i++) {
-            c.gridx = i % 3;
-            c.gridy = i / 3;
-            pn[1].add(coins[i], c);
-        }
-        /* Adding panel to frame */
-        win.add(pn[0], BorderLayout.NORTH);
-        win.add(pn[1], BorderLayout.CENTER);
+        /* set Panels for TradingFrame */
+        TradingFrame.setLayout(new BorderLayout());
+        TradingFrame.setBackground(Color.BLACK);
+        pnTrading[0] = new JPanel();
+        pnTrading[0].setBackground(Color.MAGENTA);
+        TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
+        //win.add(TradingFrame, BorderLayout.CENTER); //when activate Market doesn't show...
+        TradingFrame.setVisible(false);
 
         /* Visibility and pack for frame */
         win.pack();
@@ -78,22 +61,9 @@ public class frame extends JFrame implements ActionListener {
         for (int i = 0; i < crypto.size(); i++)
             coins[i].setText(next.get(i).toString() + " $");
 
-        for (;;) {
-            for (int i = 0; i < crypto.size(); i++) {
-                try {
-                    next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
-                    String tmp = coins[i].getText();
-                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
-                        coins[i].setForeground(Color.RED);
-                    else
-                        coins[i].setForeground(Color.GREEN);
-                    coins[i].setText(next.get(i).toString() + " $");
-                    if (i == crypto.size() - 1)
-                        Thread.sleep(10000);
-                } catch (Exception e) {
-                    System.out.println("1 = " + e);
-                }
-            }
+        if (MarketFrame.isVisible()) {
+            System.out.println("a");
+            getMarket();
         }
     }
 
@@ -137,8 +107,8 @@ public class frame extends JFrame implements ActionListener {
         return response.get("USD").getAsString();
     }
 
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == refresh) {
+    public void getMarket() {
+        for (;;) {
             for (int i = 0; i < crypto.size(); i++) {
                 try {
                     next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
@@ -148,9 +118,74 @@ public class frame extends JFrame implements ActionListener {
                     else
                         coins[i].setForeground(Color.GREEN);
                     coins[i].setText(next.get(i).toString() + " $");
+                    if (i == crypto.size() - 1)
+                        Thread.sleep(10000);
                 } catch (Exception a) {
-                    System.out.println(a);
+                    System.out.println("1 = " + a);
                 }
+            }
+        }
+    }
+
+    public void setMenu() {
+        Menu.setLayout(new FlowLayout());
+        Menu.setBackground(Color.WHITE);
+        Menu.add(Bmarket);
+        Menu.add(Btrading);
+        Bmarket.addActionListener(this);
+        Btrading.addActionListener(this);
+    }
+
+    public void setFrame() {
+        win.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        win.setPreferredSize(new Dimension(1080, 720));
+        win.setVisible(true);
+        win.setLayout(new BorderLayout());
+        win.add(Menu, BorderLayout.NORTH);
+    }
+
+    public void setMarketFrame() {
+        /* set Panels for MarketFrame */
+        MarketFrame.setLayout(new GridBagLayout());
+        MarketFrame.setBackground(Color.BLACK);
+        
+            /* Icon and Prices of Cryptocurrency */
+        for (int i = 0; i < crypto.size(); i++) {
+            coins[i] = new JLabel();
+            coins[i].setIcon(img.get(i));
+            coins[i].setForeground(Color.GREEN);
+            coins[i].setIconTextGap(20);
+            coins[i].setFont(new Font("Arial", Font.BOLD, 20));
+        }
+        
+            /* Adding Components to Panels */
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(50, 50, 100, 50);
+        for (int i = 0; i < crypto.size(); i++) {
+            c.gridx = i % 3;
+            c.gridy = i / 3;
+            MarketFrame.add(coins[i], c);
+        }
+        
+            /* Adding panel to frame */
+        win.add(MarketFrame, BorderLayout.CENTER);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == Bmarket) {
+            if (!MarketFrame.isVisible()) {
+                TradingFrame.setVisible(false);
+                MarketFrame.setVisible(true);
+                System.out.println("Market");
+            }
+        }
+        if (e.getSource() == Btrading) {
+            if (!TradingFrame.isVisible()) {
+                MarketFrame.setVisible(false);
+                TradingFrame.setVisible(true);
+                System.out.println("Trading");
             }
         }
     }
