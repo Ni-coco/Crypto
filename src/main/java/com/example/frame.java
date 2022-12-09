@@ -10,10 +10,11 @@ import java.awt.Image;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridLayout;
 import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.*;
 
 import javax.swing.*;
@@ -25,9 +26,8 @@ public class frame extends JFrame implements ActionListener {
     List<Double> next = getNext();
     List<ImageIcon> img = getImg();
     JFrame win = new JFrame("Crypto prices");
-    JPanel[] pn = new JPanel[4];
-    JLabel[] icon = new JLabel[6];
-    JLabel[] price = new JLabel[6];
+    JPanel[] pn = new JPanel[2];
+    JLabel[] coins = new JLabel[6];
     JButton refresh = new JButton("Refresh");
 
     public frame() {
@@ -44,61 +44,58 @@ public class frame extends JFrame implements ActionListener {
             pn[i] = new JPanel();
         pn[0].setLayout(new FlowLayout());
         pn[0].setBackground(Color.WHITE);
-        pn[1].setLayout(new BorderLayout());
-        pn[2].setBackground(Color.WHITE);
-        pn[2].setLayout(new GridLayout(0, 1, 20, 35));
-        pn[3].setBackground(Color.BLACK);
-        pn[3].setLayout(new GridBagLayout());
-
+        pn[1].setLayout(new GridBagLayout());
+        pn[1].setBackground(Color.BLACK);
 
         /* Icon and Prices of Cryptocurrency */
         for (int i = 0; i < crypto.size(); i++) {
-            icon[i] = new JLabel();
-            icon[i].setIcon(img.get(i));
-            price[i] = new JLabel();
-            price[i].setForeground(Color.GREEN);
+            coins[i] = new JLabel();
+            coins[i].setIcon(img.get(i));
+            coins[i].setForeground(Color.GREEN);
+            coins[i].setIconTextGap(20);
+            coins[i].setFont(new Font("Arial", Font.BOLD, 20));
         }
 
-        /* Adding Icon and Price to panel */
+        /* Adding Components to Panels */
         pn[0].add(refresh);
         GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(50, 50, 100, 50);
         for (int i = 0; i < crypto.size(); i++) {
-            pn[2].add(icon[i]);
-            c.gridy = i;
-            pn[3].add(price[i], c);
+            c.gridx = i % 3;
+            c.gridy = i / 3;
+            pn[1].add(coins[i], c);
         }
-
         /* Adding panel to frame */
         win.add(pn[0], BorderLayout.NORTH);
         win.add(pn[1], BorderLayout.CENTER);
-        pn[1].add(pn[2], BorderLayout.WEST);
-        pn[1].add(pn[3], BorderLayout.CENTER);
 
         /* Visibility and pack for frame */
         win.pack();
         win.setVisible(true);
 
         for (int i = 0; i < crypto.size(); i++)
-            price[i].setText(next.get(i).toString());
+            coins[i].setText(next.get(i).toString() + " $");
 
-        /*for (;;) {
+        for (;;) {
             for (int i = 0; i < crypto.size(); i++) {
                 try {
                     next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
-                    if (next.get(i) < Double.parseDouble(price[i].getText()))
-                        price[i].setForeground(Color.RED);
+                    String tmp = coins[i].getText();
+                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
+                        coins[i].setForeground(Color.RED);
                     else
-                        price[i].setForeground(Color.GREEN);
-                    price[i].setText(next.get(i).toString());
+                        coins[i].setForeground(Color.GREEN);
+                    coins[i].setText(next.get(i).toString() + " $");
                     if (i == crypto.size() - 1)
                         Thread.sleep(10000);
                 } catch (Exception e) {
-                    System.out.println(e);
+                    System.out.println("1 = " + e);
                 }
             }
-        }*/
+        }
     }
-
 
     public List<String> getCrypto() {
         List<String> list = new ArrayList<String>();
@@ -145,16 +142,16 @@ public class frame extends JFrame implements ActionListener {
             for (int i = 0; i < crypto.size(); i++) {
                 try {
                     next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
-                    if (next.get(i) < Double.parseDouble(price[i].getText()))
-                        price[i].setForeground(Color.RED);
+                    String tmp = coins[i].getText();
+                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
+                        coins[i].setForeground(Color.RED);
                     else
-                        price[i].setForeground(Color.GREEN);
-                    price[i].setText(next.get(i).toString());
+                        coins[i].setForeground(Color.GREEN);
+                    coins[i].setText(next.get(i).toString() + " $");
                 } catch (Exception a) {
                     System.out.println(a);
                 }
             }
         }
     }
-
 }
