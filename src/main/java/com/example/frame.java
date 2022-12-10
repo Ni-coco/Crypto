@@ -43,7 +43,7 @@ public class frame extends JFrame implements ActionListener {
 
         setMenu();
         setFrame();
-        setMarketFrame();
+        //setMarketFrame();
 
         /* set Panels for TradingFrame */
         TradingFrame.setLayout(new BorderLayout());
@@ -51,8 +51,9 @@ public class frame extends JFrame implements ActionListener {
         pnTrading[0] = new JPanel();
         pnTrading[0].setBackground(Color.MAGENTA);
         TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
-        //win.add(TradingFrame, BorderLayout.CENTER); //when activate Market doesn't show...
         TradingFrame.setVisible(false);
+
+        setMarketFrame();
 
         /* Visibility and pack for frame */
         win.pack();
@@ -61,9 +62,10 @@ public class frame extends JFrame implements ActionListener {
         for (int i = 0; i < crypto.size(); i++)
             coins[i].setText(next.get(i).toString() + " $");
 
-        if (MarketFrame.isVisible()) {
-            System.out.println("a");
-            getMarket();
+        for (;;) {
+            if (MarketFrame.isVisible()) {
+                getMarket();
+            }
         }
     }
 
@@ -109,6 +111,8 @@ public class frame extends JFrame implements ActionListener {
 
     public void getMarket() {
         for (;;) {
+            if (!MarketFrame.isVisible())
+                break;
             for (int i = 0; i < crypto.size(); i++) {
                 try {
                     next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
@@ -171,19 +175,26 @@ public class frame extends JFrame implements ActionListener {
         
             /* Adding panel to frame */
         win.add(MarketFrame, BorderLayout.CENTER);
+        MarketFrame.setVisible(true);
     }
 
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == Bmarket) {
             if (!MarketFrame.isVisible()) {
+                win.remove(TradingFrame);
                 TradingFrame.setVisible(false);
+                win.add(MarketFrame, BorderLayout.CENTER);
+                MarketFrame.repaint();
                 MarketFrame.setVisible(true);
                 System.out.println("Market");
             }
         }
         if (e.getSource() == Btrading) {
             if (!TradingFrame.isVisible()) {
+                win.remove(MarketFrame);
                 MarketFrame.setVisible(false);
+                win.add(TradingFrame, BorderLayout.CENTER);
+                TradingFrame.repaint();
                 TradingFrame.setVisible(true);
                 System.out.println("Trading");
             }
