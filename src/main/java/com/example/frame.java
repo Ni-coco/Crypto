@@ -13,14 +13,18 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
+//import java.awt.GridLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.*;
 
+import javax.swing.event.*;
 import javax.swing.*;
+import javax.swing.border.*;
+
 import java.util.*;
 
-public class frame extends JFrame implements ActionListener {
+public class frame extends JFrame implements ActionListener, ChangeListener, FocusListener {
 
     List<String> crypto = getCrypto();
     List<Double> next = getNext();
@@ -36,24 +40,112 @@ public class frame extends JFrame implements ActionListener {
     JLabel[] coins = new JLabel[6];
     /* Related to TradingFrame */
     JPanel TradingFrame = new JPanel();
-    JPanel[] pnTrading = new JPanel[2];
-
+    JScrollPane scrollPane = new JScrollPane(rootPane);
+    JPanel[] pnTrading = new JPanel[4];
+    List<JLabel> order = new ArrayList<JLabel>();
+    String[] options = crypto.toArray(new String[0]);
+    JComboBox<String> symbol = new JComboBox<String>(options);
+    JLabel coin = new JLabel();
+    JSlider leverage = new JSlider(1, 50, 1);
+    JLabel valueLeverage = new JLabel("x1");
+    JTextField amount = new JTextField();
+    JButton Longit = new JButton("Long");
+    JButton Shortit = new JButton("Short");
+    List<JComponent> components = getComp();
+    JLabel pnl = new JLabel("PNL");
+    Color gay = new Color(60, 63, 65);
 
     public frame() {
 
         setMenu();
         setFrame();
-        //setMarketFrame();
+        setMarketFrame();
 
         /* set Panels for TradingFrame */
         TradingFrame.setLayout(new BorderLayout());
         TradingFrame.setBackground(Color.BLACK);
-        pnTrading[0] = new JPanel();
-        pnTrading[0].setBackground(Color.MAGENTA);
-        TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
         TradingFrame.setVisible(false);
+        pnTrading[0] = new JPanel();
+        pnTrading[0].setBackground(Color.BLACK);
+        pnTrading[0].setLayout(new BorderLayout());
+        Border pn0border = BorderFactory.createMatteBorder(0, 0, 0, 3, Color.LIGHT_GRAY);
+        pnTrading[0].setBorder(pn0border);
 
-        setMarketFrame();
+            /* Order panel */
+        pnTrading[1] = new JPanel();
+        pnTrading[1].setBackground(Color.BLACK);
+        pnTrading[1].setLayout(new GridBagLayout());
+        Border border = BorderFactory.createLineBorder(Color.BLACK, 5);
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(20, 0, 0, 0);
+        for (int i = 0; i < 50; i++) {
+            c.gridy = i;
+            pnTrading[1].add(new JLabel("hi"), c);
+        }
+        JScrollPane scrollPane = new JScrollPane(pnTrading[1]);
+        scrollPane.setBackground(Color.BLACK);
+        scrollPane.setBorder(border);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
+        pnTrading[0].add(scrollPane, BorderLayout.CENTER);
+
+            /* Resume panel */
+        pnTrading[2] = new JPanel();
+        pnTrading[2].setBackground(Color.BLACK);
+        Border pn2border = BorderFactory.createMatteBorder(3, 0, 0, 0, Color.LIGHT_GRAY);
+        pnTrading[2].setBorder(pn2border);
+        pnl.setFont(new Font("Arial", Font.PLAIN, 20));
+        pnl.setForeground(Color.WHITE);
+        pnTrading[2].add(pnl);
+        pnTrading[0].add(pnTrading[2], BorderLayout.SOUTH);
+
+            /* Add pn[1&2] to TradingFrame */
+        TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
+
+            /* placeOrder panel */
+        pnTrading[3] = new JPanel(new GridBagLayout());
+        pnTrading[3].setBackground(Color.BLACK);
+        c.insets = new Insets(50, 40, 0, 40);
+        c.fill = GridBagConstraints.VERTICAL;
+        //symbol
+        symbol.setForeground(Color.BLACK);
+        symbol.setBackground(Color.WHITE);
+        symbol.setFocusable(false);
+        //coin
+        Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+        coin.setIcon(new ImageIcon(scaledImage));
+        coin.setText(coins[symbol.getSelectedIndex()].getText());
+        //leverage
+        leverage.setForeground(gay);
+        leverage.setBackground(Color.WHITE);
+        //valueLeverage
+        valueLeverage.setForeground(Color.WHITE);
+        //amount
+        amount.setText("Amount in $");
+        amount.setForeground(Color.BLACK);
+        amount.setBackground(Color.WHITE);
+        amount.setMinimumSize(new Dimension(amount.getPreferredSize()));
+        amount.setHorizontalAlignment(JTextField.CENTER);
+        //long
+        Longit.setForeground(Color.BLACK);
+        Longit.setBackground(new Color(144, 238, 144));
+        //short
+        Shortit.setForeground(Color.BLACK);
+        Shortit.setBackground(new Color(255, 127, 127));
+
+        for (int i = 0; i < components.size(); i++) {
+            c.gridy = i;
+            pnTrading[3].add(components.get(i), c);
+        }
+
+        TradingFrame.add(pnTrading[3], BorderLayout.EAST);
+
+        symbol.addActionListener(this);
+        leverage.addChangeListener(this);
+        amount.addFocusListener(this);
+        Longit.addActionListener(this);
+        Shortit.addActionListener(this);
 
         /* Visibility and pack for frame */
         win.pack();
@@ -63,9 +155,10 @@ public class frame extends JFrame implements ActionListener {
             coins[i].setText(next.get(i).toString() + " $");
 
         for (;;) {
-            if (MarketFrame.isVisible()) {
+            if (MarketFrame.isVisible())
                 getMarket();
-            }
+            else if (TradingFrame.isVisible())
+                getTrading();
         }
     }
 
@@ -96,7 +189,7 @@ public class frame extends JFrame implements ActionListener {
     public List<ImageIcon> getImg() {
         List<ImageIcon> list = new ArrayList<ImageIcon>();
         for (int i = 0; i< crypto.size(); i++)
-            list.add(new ImageIcon(new ImageIcon(getClass().getClassLoader().getResource("img/"+crypto.get(i)+".png")).getImage().getScaledInstance(70, 70, Image.SCALE_DEFAULT)));
+            list.add(new ImageIcon(new ImageIcon(getClass().getClassLoader().getResource("img/"+crypto.get(i)+".png")).getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH)));
         return list;
     }
 
@@ -107,6 +200,7 @@ public class frame extends JFrame implements ActionListener {
         JsonParser parser = new JsonParser();
         JsonObject response = parser.parse(jsonReader).getAsJsonObject();
         return response.get("USD").getAsString();
+        //return "100";
     }
 
     public void getMarket() {
@@ -131,9 +225,37 @@ public class frame extends JFrame implements ActionListener {
         }
     }
 
+    public void getTrading() {
+        for (;;) {
+            if (!TradingFrame.isVisible())
+                break;
+            Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH); //Mettre ca dans une liste
+            coin.setIcon(new ImageIcon(scaledImage));
+            coin.setText(coins[symbol.getSelectedIndex()].getText());
+        }
+    }
+
+    public List<JComponent> getComp() {
+        List<JComponent> list = new ArrayList<JComponent>();
+        list.add(symbol);
+        list.add(coin);
+        list.add(leverage);
+        list.add(valueLeverage);
+        list.add(amount);
+        list.add(Longit);
+        list.add(Shortit);
+        return list;
+    }
+
     public void setMenu() {
         Menu.setLayout(new FlowLayout());
-        Menu.setBackground(Color.WHITE);
+        Menu.setBackground(gay);
+        Bmarket.setBackground(Color.WHITE);
+        Btrading.setBackground(Color.WHITE);
+        Bmarket.setForeground(Color.DARK_GRAY);
+        Btrading.setForeground(Color.DARK_GRAY);
+        Bmarket.setFocusPainted(false);
+        Btrading.setFocusPainted(false);
         Menu.add(Bmarket);
         Menu.add(Btrading);
         Bmarket.addActionListener(this);
@@ -145,6 +267,7 @@ public class frame extends JFrame implements ActionListener {
         win.setPreferredSize(new Dimension(1080, 720));
         win.setVisible(true);
         win.setLayout(new BorderLayout());
+        win.setBackground(Color.BLACK);
         win.add(Menu, BorderLayout.NORTH);
     }
 
@@ -172,12 +295,12 @@ public class frame extends JFrame implements ActionListener {
             c.gridy = i / 3;
             MarketFrame.add(coins[i], c);
         }
-        
             /* Adding panel to frame */
         win.add(MarketFrame, BorderLayout.CENTER);
         MarketFrame.setVisible(true);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == Bmarket) {
             if (!MarketFrame.isVisible()) {
@@ -196,8 +319,35 @@ public class frame extends JFrame implements ActionListener {
                 win.add(TradingFrame, BorderLayout.CENTER);
                 TradingFrame.repaint();
                 TradingFrame.setVisible(true);
+                Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
+                coin.setIcon(new ImageIcon(scaledImage));
+                coin.setText(coins[symbol.getSelectedIndex()].getText());
                 System.out.println("Trading");
             }
         }
+        if (e.getSource() == Longit) {
+            System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Long");
+        }
+        if (e.getSource() == Shortit) {
+            System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Short");
+        }
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+        JSlider source = (JSlider) e.getSource();
+        valueLeverage.setText("x" + source.getValue());
+    }
+
+    @Override
+    public void focusGained(FocusEvent e) {
+        if (amount.getText().equals("Amount in $"))
+            amount.setText(null);
+    }
+
+    @Override
+    public void focusLost(FocusEvent e) {
+        if (amount.getText().isEmpty())
+            amount.setText("Amount in $");
     }
 }
