@@ -2,9 +2,13 @@ package com.example;
 
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import java.io.InputStreamReader;
 import java.net.URL;
+
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import java.awt.Image;
 import java.awt.Dimension;
@@ -26,9 +30,11 @@ import java.util.*;
 
 public class frame extends JFrame implements ActionListener, ChangeListener, FocusListener {
 
-    List<String> crypto = getCrypto();
+    List<String> cryptop = getCryptoforp();
+    List<String> crypto = getCryto();
     List<Double> next = getNext();
-    List<ImageIcon> img = getImg();
+    List<ImageIcon> Marketimg = getMarketImg();
+    List<ImageIcon> Tradingimg = getTradingImg();
     JFrame win = new JFrame("Crypto prices"); //frame
     /* Related to Menu */
     JPanel Menu = new JPanel();
@@ -113,8 +119,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         symbol.setBackground(Color.WHITE);
         symbol.setFocusable(false);
         //coin
-        Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-        coin.setIcon(new ImageIcon(scaledImage));
+        coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
         coin.setText(coins[symbol.getSelectedIndex()].getText());
         //leverage
         leverage.setForeground(gay);
@@ -153,16 +158,22 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
 
         for (int i = 0; i < crypto.size(); i++)
             coins[i].setText(next.get(i).toString() + " $");
-
-        for (;;) {
-            if (MarketFrame.isVisible())
-                getMarket();
-            else if (TradingFrame.isVisible())
-                getTrading();
-        }
+        for (;;)
+            getMarket();
     }
 
-    public List<String> getCrypto() {
+    public List<String> getCryptoforp() {
+        List<String> list = new ArrayList<String>();
+        list.add("bitcoin");
+        list.add("ethereum");
+        list.add("binance-coin");
+        list.add("solana");
+        list.add("fantom");
+        list.add("WLKN");
+        return list;
+    }
+
+    public List<String> getCryto() {
         List<String> list = new ArrayList<String>();
         list.add("BTC");
         list.add("ETH");
@@ -176,9 +187,9 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
 
     public List<Double> getNext() {
         List<Double> list = new ArrayList<Double>();
-        for (int i = 0; i < crypto.size(); i++) {
+        for (int i = 0; i < cryptop.size(); i++) {
             try {
-                list.add(Double.parseDouble(getPrices(crypto.get(i))));
+                list.add(Double.parseDouble(getPrices(cryptop.get(i))));
             } catch (Exception e) {
                 System.out.println(e);
             }
@@ -186,52 +197,57 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         return list;
     }
 
-    public List<ImageIcon> getImg() {
+    public List<ImageIcon> getMarketImg() {
         List<ImageIcon> list = new ArrayList<ImageIcon>();
         for (int i = 0; i< crypto.size(); i++)
             list.add(new ImageIcon(new ImageIcon(getClass().getClassLoader().getResource("img/"+crypto.get(i)+".png")).getImage().getScaledInstance(70, 70, Image.SCALE_SMOOTH)));
         return list;
     }
 
+    public List<ImageIcon> getTradingImg() {
+        List<ImageIcon> list = new ArrayList<ImageIcon>();
+        for (int i = 0; i < crypto.size(); i++)
+            list.add(new ImageIcon(new ImageIcon(getClass().getClassLoader().getResource("img/"+crypto.get(i)+".png")).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH)));
+        return list;
+    }
+
     public String getPrices(String str) throws Exception {
-        URL financeUrl = new URL("https://min-api.cryptocompare.com/data/price?fsym="+str+"&tsyms=USD&api_key=ef6c349317448a25c217cdab8e57e2c94bb8e053f17c51ca600efcf2ae862a1b");
+        URL financeUrl = new URL("https://api.coincap.io/v2/assets/"+str+"?api_key=185cee67-ae9a-46bd-bd1e-0375946363e9");
+        if (str.equals("WLKN"))
+            financeUrl = new URL("https://min-api.cryptocompare.com/data/price?fsym="+str+"&tsyms=USD&api_key=ef6c349317448a25c217cdab8e57e2c94bb8e053f17c51ca600efcf2ae862a1b");
         InputStreamReader reader = new InputStreamReader(financeUrl.openStream());
         JsonReader jsonReader = new JsonReader(reader);
         JsonParser parser = new JsonParser();
-        JsonObject response = parser.parse(jsonReader).getAsJsonObject();
-        return response.get("USD").getAsString();
-        //return "100";
+        if (str.equals("WLKN"))
+            return parser.parse(jsonReader).getAsJsonObject().get("USD").getAsString();
+        JsonElement rootElement = parser.parse(jsonReader);
+        JsonObject rootObject = rootElement.getAsJsonObject();
+        JsonObject data = rootObject.get("data").getAsJsonObject();
+        double a = data.get("priceUsd").getAsDouble();
+        if (a < 10)
+            return (new BigDecimal(a).setScale(4, RoundingMode.HALF_UP)).toPlainString();
+        return (new BigDecimal(a).setScale(2, RoundingMode.HALF_UP)).toPlainString();
     }
 
     public void getMarket() {
         for (;;) {
-            if (!MarketFrame.isVisible())
-                break;
             for (int i = 0; i < crypto.size(); i++) {
+                coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
+                coin.setText(coins[symbol.getSelectedIndex()].getText());
                 try {
-                    next.set(i, Double.parseDouble(getPrices(crypto.get(i))));
+                    next.set(i, Double.parseDouble(getPrices(cryptop.get(i))));
                     String tmp = coins[i].getText();
                     if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
                         coins[i].setForeground(Color.RED);
-                    else
+                    else if (next.get(i) > Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
                         coins[i].setForeground(Color.GREEN);
                     coins[i].setText(next.get(i).toString() + " $");
                     if (i == crypto.size() - 1)
-                        Thread.sleep(10000);
+                        Thread.sleep(1000);
                 } catch (Exception a) {
                     System.out.println("1 = " + a);
                 }
             }
-        }
-    }
-
-    public void getTrading() {
-        for (;;) {
-            if (!TradingFrame.isVisible())
-                break;
-            Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH); //Mettre ca dans une liste
-            coin.setIcon(new ImageIcon(scaledImage));
-            coin.setText(coins[symbol.getSelectedIndex()].getText());
         }
     }
 
@@ -279,7 +295,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
             /* Icon and Prices of Cryptocurrency */
         for (int i = 0; i < crypto.size(); i++) {
             coins[i] = new JLabel();
-            coins[i].setIcon(img.get(i));
+            coins[i].setIcon(Marketimg.get(i));
             coins[i].setForeground(Color.GREEN);
             coins[i].setIconTextGap(20);
             coins[i].setFont(new Font("Arial", Font.BOLD, 20));
@@ -319,9 +335,6 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 win.add(TradingFrame, BorderLayout.CENTER);
                 TradingFrame.repaint();
                 TradingFrame.setVisible(true);
-                Image scaledImage = img.get(symbol.getSelectedIndex()).getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH);
-                coin.setIcon(new ImageIcon(scaledImage));
-                coin.setText(coins[symbol.getSelectedIndex()].getText());
                 System.out.println("Trading");
             }
         }
