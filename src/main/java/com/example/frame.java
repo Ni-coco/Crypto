@@ -47,7 +47,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
     JPanel TradingFrame = new JPanel();
     JScrollPane scrollPane = new JScrollPane(rootPane);
     JPanel[] pnTrading = new JPanel[4];
-    List<JLabel> order = new ArrayList<JLabel>();
+    List<order> lorder = new ArrayList<order>();
     String[] options = crypto.toArray(new String[0]);
     JComboBox<String> symbol = new JComboBox<String>(options);
     JLabel coin = new JLabel();
@@ -86,13 +86,13 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         pnTrading[1].setLayout(new GridBagLayout());
         Border border = BorderFactory.createLineBorder(Color.BLACK, 5);
         GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
+        /*c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
         c.insets = new Insets(20, 0, 0, 0);
         for (int i = 0; i < 50; i++) {
             c.gridy = i;
             pnTrading[1].add(new JLabel("hi"), c);
-        }
+        }*/
         JScrollPane scrollPane = new JScrollPane(pnTrading[1]);
         scrollPane.setBackground(Color.BLACK);
         scrollPane.setBorder(border);
@@ -181,8 +181,16 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
         coin.setText(coins[symbol.getSelectedIndex()].getText());
 
-        for (;;)
+        for (;;) {
             getMarket();
+            setOrder(); //set the order to be displayed
+            /* 
+            1. Faire une fonction qui configure une liste de JLabel qui feront le JLabel en entier ? List<List<JLabel>> listdesjlabel.
+                    -> List<List<JLabel>> tmp = new ArrayList<List<JLabel>>();
+            2. Faire une fonction qui ajoute le label crée à la suite des autres labels en respectant les contraintes?
+            3. Faire une fonction qui permet d'update le pnl (voir plus bas) attention couleur rouge ou vert selon plus ou moins.
+            */
+        }
     }
 
     public List<String> getCryptoforp() {
@@ -277,6 +285,12 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         }
     }
 
+    public void setOrder() {
+        for (int i = 0; i < lorder.size(); i++) {
+
+        }
+    }
+
     public List<JComponent> getComp() {
         List<JComponent> list = new ArrayList<JComponent>();
         list.add(symbol);
@@ -310,6 +324,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         win.setPreferredSize(new Dimension(1080, 720));
         win.setVisible(true);
         win.setLayout(new BorderLayout());
+        win.setResizable(false);
         win.setBackground(Color.BLACK);
         win.add(Menu, BorderLayout.NORTH);
     }
@@ -375,6 +390,13 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 amount.setBackground(Color.WHITE);
                 balance -= Double.parseDouble(amount.getText());
                 lbalance.setText("Balance : " + balance);
+                lorder.add(new order(symbol.getSelectedItem().toString(),
+                    Double.parseDouble(amount.getText()),
+                    Integer.parseInt(valueLeverage.toString()),
+                    "Long",
+                    Double.parseDouble(coin.getText()),
+                    Double.parseDouble(coin.getText()),
+                    0));
             }
         }
         if (e.getSource() == Shortit) {
@@ -385,6 +407,13 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 amount.setBackground(Color.WHITE);
                 balance -= Double.parseDouble(amount.getText());
                 lbalance.setText("Balance : " + balance);
+                lorder.add(new order(symbol.getSelectedItem().toString(),
+                    Double.parseDouble(amount.getText()),
+                    Integer.parseInt(valueLeverage.toString()),
+                    "Short",
+                    Double.parseDouble(coin.getText()),
+                    Double.parseDouble(coin.getText()),
+                    0));
             }
         }
     }
@@ -409,4 +438,37 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 amount.setText("Amount in $");
         }
     }
+}
+
+class order {
+    String crypto;
+    double amount;
+    int leverage;
+    String sl;
+    double price;
+    double market;
+    double pnl;
+    JLabel res = new JLabel();
+
+    public order(String crypto, double amount, int leverage, String sl, double price, double market, double pnl) {
+        this.crypto = crypto;
+        this.amount = amount;
+        this.leverage = leverage;
+        this.sl = sl;
+        this.price = price;
+        this.market = market;
+        this.pnl = pnl;
+    }
+
+    /*public JLabel getLabel() {
+        if (sl.equals("Long")) {
+            pnl = (price - market) * ((amount/price) * leverage) * 1;
+            res.setText(crypto + " " + amount + " x" + leverage + " " + sl + " " + price + " " + market + " " + pnl);
+        }
+        else {
+            pnl = (market - price) * ((amount/price) * leverage) * 1;
+            res.setText(crypto + " " + amount + " x" + leverage + " " + sl + " " + price + " " + market + " " + pnl);
+        }
+        return res;
+    }*/
 }
