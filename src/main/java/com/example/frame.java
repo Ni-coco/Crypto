@@ -5,8 +5,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.net.URL;
-
 import java.io.InputStreamReader;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -25,7 +25,6 @@ import java.awt.event.*;
 import javax.swing.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
-
 import java.util.*;
 
 public class frame extends JFrame implements ActionListener, ChangeListener, FocusListener {
@@ -60,9 +59,11 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
     List<JComponent> components = getComp();
     JLabel pnl = new JLabel("PNL");
     Color gay = new Color(60, 63, 65);
+    Color greenp = new Color(144, 238, 144);
+    Color redp = new Color(255, 127, 127);
 
     public frame() {
-
+        
         setMenu();
         setFrame();
         setMarketFrame();
@@ -119,6 +120,9 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         symbol.setBackground(Color.WHITE);
         symbol.setFocusable(false);
         //coin
+        coin.setIconTextGap(10);
+        coin.setFont(new Font("Arial", Font.BOLD, 15));
+        coin.setForeground(greenp);
         coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
         coin.setText(coins[symbol.getSelectedIndex()].getText());
         //leverage
@@ -158,6 +162,10 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
 
         for (int i = 0; i < crypto.size(); i++)
             coins[i].setText(next.get(i).toString() + " $");
+
+        coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
+        coin.setText(coins[symbol.getSelectedIndex()].getText());
+
         for (;;)
             getMarket();
     }
@@ -223,27 +231,30 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         JsonElement rootElement = parser.parse(jsonReader);
         JsonObject rootObject = rootElement.getAsJsonObject();
         JsonObject data = rootObject.get("data").getAsJsonObject();
-        double a = data.get("priceUsd").getAsDouble();
-        if (a < 10)
-            return (new BigDecimal(a).setScale(4, RoundingMode.HALF_UP)).toPlainString();
-        return (new BigDecimal(a).setScale(2, RoundingMode.HALF_UP)).toPlainString();
+        double tmp = data.get("priceUsd").getAsDouble();
+        if (tmp < 10)
+            return (new BigDecimal(tmp).setScale(4, RoundingMode.HALF_UP)).toPlainString();
+        return (new BigDecimal(tmp).setScale(2, RoundingMode.HALF_UP)).toPlainString();
     }
 
     public void getMarket() {
         for (;;) {
             for (int i = 0; i < crypto.size(); i++) {
-                coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
-                coin.setText(coins[symbol.getSelectedIndex()].getText());
                 try {
                     next.set(i, Double.parseDouble(getPrices(cryptop.get(i))));
                     String tmp = coins[i].getText();
-                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
+                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", ""))) {
                         coins[i].setForeground(Color.RED);
-                    else if (next.get(i) > Double.parseDouble(tmp.replaceAll("[^0-9.]", "")))
+                        coin.setForeground(redp);
+                    }
+                    else if (next.get(i) > Double.parseDouble(tmp.replaceAll("[^0-9.]", ""))) {
                         coins[i].setForeground(Color.GREEN);
+                        coin.setForeground(greenp);
+                    }
                     coins[i].setText(next.get(i).toString() + " $");
+                    coin.setText(coins[symbol.getSelectedIndex()].getText());
                     if (i == crypto.size() - 1)
-                        Thread.sleep(1000);
+                        Thread.sleep(5000);
                 } catch (Exception a) {
                     System.out.println("1 = " + a);
                 }
@@ -325,7 +336,6 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 win.add(MarketFrame, BorderLayout.CENTER);
                 MarketFrame.repaint();
                 MarketFrame.setVisible(true);
-                System.out.println("Market");
             }
         }
         if (e.getSource() == Btrading) {
@@ -335,8 +345,11 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 win.add(TradingFrame, BorderLayout.CENTER);
                 TradingFrame.repaint();
                 TradingFrame.setVisible(true);
-                System.out.println("Trading");
             }
+        }
+        if (e.getSource() == symbol) {
+            coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
+            coin.setText(coins[symbol.getSelectedIndex()].getText());
         }
         if (e.getSource() == Longit) {
             System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Long");
