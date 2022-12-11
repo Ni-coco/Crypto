@@ -56,6 +56,8 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
     JTextField amount = new JTextField();
     JButton Longit = new JButton("Long");
     JButton Shortit = new JButton("Short");
+    double balance = 500;
+    JLabel lbalance = new JLabel("Balance : " + balance);
     List<JComponent> components = getComp();
     JLabel pnl = new JLabel("PNL");
     Color gay = new Color(60, 63, 65);
@@ -113,8 +115,6 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
             /* placeOrder panel */
         pnTrading[3] = new JPanel(new GridBagLayout());
         pnTrading[3].setBackground(Color.BLACK);
-        c.insets = new Insets(50, 40, 0, 40);
-        c.fill = GridBagConstraints.VERTICAL;
         //symbol
         symbol.setForeground(Color.BLACK);
         symbol.setBackground(Color.WHITE);
@@ -134,6 +134,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         amount.setText("Amount in $");
         amount.setForeground(Color.BLACK);
         amount.setBackground(Color.WHITE);
+        amount.setFont(new Font("Arial", Font.PLAIN, 14));
         amount.setMinimumSize(new Dimension(amount.getPreferredSize()));
         amount.setHorizontalAlignment(JTextField.CENTER);
         //long
@@ -142,8 +143,22 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         //short
         Shortit.setForeground(Color.BLACK);
         Shortit.setBackground(new Color(255, 127, 127));
+        //balance
+        lbalance.setFont(new Font("Arial", Font.BOLD, 16));
+        lbalance.setForeground(Color.WHITE);
 
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        c.weightx = 2;
+        c.weighty = 2;
+
+        c.fill = GridBagConstraints.VERTICAL;
         for (int i = 0; i < components.size(); i++) {
+            c.insets = new Insets(25, 20, 25, 20);
+            if (components.get(i) == leverage)
+                c.insets = new Insets(25, 20, 0, 20);
+            if (components.get(i) == valueLeverage)
+                c.insets = new Insets(0, 20, 25, 20);
             c.gridy = i;
             pnTrading[3].add(components.get(i), c);
         }
@@ -271,6 +286,7 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         list.add(amount);
         list.add(Longit);
         list.add(Shortit);
+        list.add(lbalance);
         return list;
     }
 
@@ -353,9 +369,23 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         }
         if (e.getSource() == Longit) {
             System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Long");
+            if (Double.parseDouble(amount.getText()) > balance)
+                amount.setBackground(redp);
+            else {
+                amount.setBackground(Color.WHITE);
+                balance -= Double.parseDouble(amount.getText());
+                lbalance.setText("Balance : " + balance);
+            }
         }
         if (e.getSource() == Shortit) {
             System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Short");
+            if (Double.parseDouble(amount.getText()) > balance)
+                amount.setBackground(redp);
+            else {
+                amount.setBackground(Color.WHITE);
+                balance -= Double.parseDouble(amount.getText());
+                lbalance.setText("Balance : " + balance);
+            }
         }
     }
 
@@ -373,7 +403,10 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
 
     @Override
     public void focusLost(FocusEvent e) {
-        if (amount.getText().isEmpty())
-            amount.setText("Amount in $");
+        if (amount.getText().isEmpty() || Double.parseDouble(amount.getText()) < balance) {
+            amount.setBackground(Color.WHITE);
+            if (amount.getText().isEmpty())
+                amount.setText("Amount in $");
+        }
     }
 }
