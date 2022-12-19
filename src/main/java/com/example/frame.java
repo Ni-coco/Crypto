@@ -17,24 +17,28 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
-//import java.awt.GridLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.*;
+import java.awt.Cursor;
 
 import javax.swing.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import java.util.*;
+import java.io.*;
 
-public class frame extends JFrame implements ActionListener, ChangeListener, FocusListener {
+import java.net.*;
 
+public class frame extends JFrame implements ActionListener, ChangeListener, FocusListener, MouseListener {
+
+    int index = 0;
     List<String> cryptop = getCryptoforp();
     List<String> crypto = getCryto();
     List<Double> next = getNext();
     List<ImageIcon> Marketimg = getMarketImg();
     List<ImageIcon> Tradingimg = getTradingImg();
-    JFrame win = new JFrame("Crypto prices"); //frame
+    JFrame win = new JFrame("Crypto prices");
     /* Related to Menu */
     JPanel Menu = new JPanel();
     JButton Bmarket = new JButton("Market");
@@ -47,7 +51,8 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
     JPanel TradingFrame = new JPanel();
     JScrollPane scrollPane = new JScrollPane(rootPane);
     JPanel[] pnTrading = new JPanel[4];
-    List<order> lorder = new ArrayList<order>();
+    JLabel error = new JLabel("Erreur de connexion...");
+    double balance = readBalance();
     String[] options = crypto.toArray(new String[0]);
     JComboBox<String> symbol = new JComboBox<String>(options);
     JLabel coin = new JLabel();
@@ -56,120 +61,22 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
     JTextField amount = new JTextField();
     JButton Longit = new JButton("Long");
     JButton Shortit = new JButton("Short");
-    double balance = 500;
-    JLabel lbalance = new JLabel("Balance : " + balance);
+    JLabel lbalance = new JLabel("Balance : " + balance + " $");
     List<JComponent> components = getComp();
     JLabel pnl = new JLabel("PNL");
+    ImageIcon cnc = new ImageIcon(new ImageIcon(getClass().getClassLoader().getResource("img/cancel.png")).getImage().getScaledInstance(15, 15, Image.SCALE_SMOOTH));
     Color gay = new Color(60, 63, 65);
     Color greenp = new Color(144, 238, 144);
     Color redp = new Color(255, 127, 127);
+    List<List<JLabel>> order = new ArrayList<List<JLabel>>();
+    int gridy = 0;
 
     public frame() {
-        
+
         setMenu();
         setFrame();
         setMarketFrame();
-
-        /* set Panels for TradingFrame */
-        TradingFrame.setLayout(new BorderLayout());
-        TradingFrame.setBackground(Color.BLACK);
-        TradingFrame.setVisible(false);
-        pnTrading[0] = new JPanel();
-        pnTrading[0].setBackground(Color.BLACK);
-        pnTrading[0].setLayout(new BorderLayout());
-        Border pn0border = BorderFactory.createMatteBorder(0, 0, 0, 3, Color.LIGHT_GRAY);
-        pnTrading[0].setBorder(pn0border);
-
-            /* Order panel */
-        pnTrading[1] = new JPanel();
-        pnTrading[1].setBackground(Color.BLACK);
-        pnTrading[1].setLayout(new GridBagLayout());
-        Border border = BorderFactory.createLineBorder(Color.BLACK, 5);
-        GridBagConstraints c = new GridBagConstraints();
-        /*c.fill = GridBagConstraints.HORIZONTAL;
-        c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(20, 0, 0, 0);
-        for (int i = 0; i < 50; i++) {
-            c.gridy = i;
-            pnTrading[1].add(new JLabel("hi"), c);
-        }*/
-        JScrollPane scrollPane = new JScrollPane(pnTrading[1]);
-        scrollPane.setBackground(Color.BLACK);
-        scrollPane.setBorder(border);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        pnTrading[0].add(scrollPane, BorderLayout.CENTER);
-
-            /* Resume panel */
-        pnTrading[2] = new JPanel();
-        pnTrading[2].setBackground(Color.BLACK);
-        Border pn2border = BorderFactory.createMatteBorder(3, 0, 0, 0, Color.LIGHT_GRAY);
-        pnTrading[2].setBorder(pn2border);
-        pnl.setFont(new Font("Arial", Font.PLAIN, 20));
-        pnl.setForeground(Color.WHITE);
-        pnTrading[2].add(pnl);
-        pnTrading[0].add(pnTrading[2], BorderLayout.SOUTH);
-
-            /* Add pn[1&2] to TradingFrame */
-        TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
-
-            /* placeOrder panel */
-        pnTrading[3] = new JPanel(new GridBagLayout());
-        pnTrading[3].setBackground(Color.BLACK);
-        //symbol
-        symbol.setForeground(Color.BLACK);
-        symbol.setBackground(Color.WHITE);
-        symbol.setFocusable(false);
-        //coin
-        coin.setIconTextGap(10);
-        coin.setFont(new Font("Arial", Font.BOLD, 15));
-        coin.setForeground(greenp);
-        coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
-        coin.setText(coins[symbol.getSelectedIndex()].getText());
-        //leverage
-        leverage.setForeground(gay);
-        leverage.setBackground(Color.WHITE);
-        //valueLeverage
-        valueLeverage.setForeground(Color.WHITE);
-        //amount
-        amount.setText("Amount in $");
-        amount.setForeground(Color.BLACK);
-        amount.setBackground(Color.WHITE);
-        amount.setFont(new Font("Arial", Font.PLAIN, 14));
-        amount.setMinimumSize(new Dimension(amount.getPreferredSize()));
-        amount.setHorizontalAlignment(JTextField.CENTER);
-        //long
-        Longit.setForeground(Color.BLACK);
-        Longit.setBackground(new Color(144, 238, 144));
-        //short
-        Shortit.setForeground(Color.BLACK);
-        Shortit.setBackground(new Color(255, 127, 127));
-        //balance
-        lbalance.setFont(new Font("Arial", Font.BOLD, 16));
-        lbalance.setForeground(Color.WHITE);
-
-        c.gridwidth = 1;
-        c.gridheight = 1;
-        c.weightx = 2;
-        c.weighty = 2;
-
-        c.fill = GridBagConstraints.VERTICAL;
-        for (int i = 0; i < components.size(); i++) {
-            c.insets = new Insets(25, 20, 25, 20);
-            if (components.get(i) == leverage)
-                c.insets = new Insets(25, 20, 0, 20);
-            if (components.get(i) == valueLeverage)
-                c.insets = new Insets(0, 20, 25, 20);
-            c.gridy = i;
-            pnTrading[3].add(components.get(i), c);
-        }
-
-        TradingFrame.add(pnTrading[3], BorderLayout.EAST);
-
-        symbol.addActionListener(this);
-        leverage.addChangeListener(this);
-        amount.addFocusListener(this);
-        Longit.addActionListener(this);
-        Shortit.addActionListener(this);
+        setTradingFrame();
 
         /* Visibility and pack for frame */
         win.pack();
@@ -180,16 +87,10 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
 
         coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
         coin.setText(coins[symbol.getSelectedIndex()].getText());
+        readOrder();
 
         for (;;) {
             getMarket();
-            setOrder(); //set the order to be displayed
-            /* 
-            1. Faire une fonction qui configure une liste de JLabel qui feront le JLabel en entier ? List<List<JLabel>> listdesjlabel.
-                    -> List<List<JLabel>> tmp = new ArrayList<List<JLabel>>();
-            2. Faire une fonction qui ajoute le label crée à la suite des autres labels en respectant les contraintes?
-            3. Faire une fonction qui permet d'update le pnl (voir plus bas) attention couleur rouge ou vert selon plus ou moins.
-            */
         }
     }
 
@@ -265,30 +166,273 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
             for (int i = 0; i < crypto.size(); i++) {
                 try {
                     next.set(i, Double.parseDouble(getPrices(cryptop.get(i))));
-                    String tmp = coins[i].getText();
-                    if (next.get(i) < Double.parseDouble(tmp.replaceAll("[^0-9.]", ""))) {
-                        coins[i].setForeground(Color.RED);
-                        coin.setForeground(redp);
+                    if (error.isVisible()) {
+                        error.setVisible(false);
+                        Bmarket.setVisible(true);
+                        Btrading.setVisible(true);
                     }
-                    else if (next.get(i) > Double.parseDouble(tmp.replaceAll("[^0-9.]", ""))) {
+                    error.setVisible(false);
+                    if (next.get(i) < Double.parseDouble(coins[i].getText().replaceAll("[^0-9.]", ""))) {
+                        coins[i].setForeground(Color.RED);
+                        if (symbol.getSelectedItem().equals(crypto.get(i)))
+                            coin.setForeground(redp);
+                    }
+                    else if (next.get(i) > Double.parseDouble(coins[i].getText().replaceAll("[^0-9.]", ""))) {
                         coins[i].setForeground(Color.GREEN);
-                        coin.setForeground(greenp);
+                        if (symbol.getSelectedItem().equals(crypto.get(i)))
+                            coin.setForeground(greenp);
                     }
                     coins[i].setText(next.get(i).toString() + " $");
                     coin.setText(coins[symbol.getSelectedIndex()].getText());
+                    getOrder();
                     if (i == crypto.size() - 1)
                         Thread.sleep(5000);
                 } catch (Exception a) {
+                    error.setVisible(true);
+                    Bmarket.setVisible(false);
+                    Btrading.setVisible(false);
                     System.out.println("1 = " + a);
                 }
             }
         }
     }
 
-    public void setOrder() {
-        for (int i = 0; i < lorder.size(); i++) {
-
+    public void getOrder() {
+        double res = 0;
+        int index = 0;
+        for (int i = 0; i < order.size(); i++) {
+            for (int j = 0; j < crypto.size(); j++) {
+                if (order.get(i).get(0).getText().equals(symbol.getItemAt(j)))
+                    index = j;
+            }
+            order.get(i).get(9).setText(coins[index].getText());
+            order.get(i).get(9).setForeground((coins[index].getForeground() == Color.red) ? redp : greenp);
+            double amount = Double.parseDouble(order.get(i).get(2).getText().replace("$", ""));
+            int lev = Integer.parseInt(order.get(i).get(4).getText().replaceAll("x", ""));
+            double price = Double.parseDouble(order.get(i).get(7).getText().replace("$", ""));
+            double market = Double.parseDouble(order.get(i).get(9).getText().replace("$", ""));
+            double prev = Double.parseDouble(order.get(i).get(11).getText().replaceAll("[+$]", ""));
+            if (order.get(i).get(5).getText().equals("Long"))
+                res = (market - price) * ((amount/price) * lev) * 1;
+            else
+                res = (price - market) * ((amount/price) * lev) * 1;
+            res = Math.round(res*100);
+            if (res > 0)
+               order.get(i).get(11).setText("+" + Double.toString(res/100) + " $");
+            else
+                order.get(i).get(11).setText(Double.toString(res/100) + " $");
+            if (prev < res)
+                order.get(i).get(11).setForeground(greenp);
+            else
+                order.get(i).get(11).setForeground(redp);
         }
+    }
+
+    public void displayOrder(List<JLabel> list) {
+        GridBagConstraints cstr = new GridBagConstraints();
+        cstr.insets = new Insets(0, 0, 15, 5);
+        for (int i = 0; i < list.size() - 1; i++) {
+            cstr.gridx = i;
+            cstr.gridy = gridy;
+            if (i == list.size() - 2)
+                cstr.insets = new Insets(0, 20, 15, 5);
+            pnTrading[1].add(list.get(i), cstr);
+        }
+        gridy++;
+    }
+
+    public void reDisplay(int gridy, int rm, int read) {
+        pnTrading[1].removeAll();
+        pnTrading[1].setVisible(false);
+        GridBagConstraints cstr = new GridBagConstraints();
+        for (int j = 0; j < order.size(); j++) {
+            for (int i = 0; i < order.get(j).size() - 1; i++) {
+                cstr.insets = new Insets(0, 0, 15, 5);
+                cstr.gridx = i;
+                cstr.gridy = gridy;
+                if (i == order.get(j).size() - 2) {
+                    cstr.insets = new Insets(0, 20, 15, 5);
+                }
+                pnTrading[1].add(order.get(j).get(i), cstr);
+            }
+            gridy++;
+        }
+        if (read == 0)
+            for (int i = rm; i < order.size(); i++) {
+                order.get(i).get(order.get(i).size()-1).setText(Integer.toString((Integer.parseInt(order.get(i).get(order.get(i).size()-1).getText())-1)));
+        }
+        pnTrading[1].setVisible(true);
+    }
+
+    public double readBalance() {
+        try {
+            File file = new File("src/main/java/data/balance.txt");
+            Scanner scan = new Scanner(file);
+            balance = Double.parseDouble(scan.nextLine());
+            scan.close();
+            return balance;
+        } catch (Exception e) {
+            System.out.println("File" + e);
+        }
+        return 0;
+    }
+
+    public void writeBalance() {
+        try (FileWriter fw = new FileWriter("src/main/java/data/balance.txt")) {
+            fw.write(String.valueOf(balance));
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+    }
+
+    public void readOrder() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/data/order.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                List<JLabel> list = new ArrayList<JLabel>();
+                String[] tmp = line.split("/");
+                JLabel[] third = new JLabel[3];
+                JLabel[] info = new JLabel[5];
+                info[0] = new JLabel(tmp[1]);
+                info[1] = new JLabel(tmp[3]);
+                info[2] = new JLabel(tmp[6]);
+                info[3] = new JLabel(tmp[8]);
+                info[4] = new JLabel(tmp[9]);
+                for (int i = 0; i < info.length; i++)
+                    info[i].setForeground(gay);
+                third[0] = new JLabel(tmp[0]);
+                third[1] = new JLabel(tmp[2]);
+                third[2] = new JLabel(tmp[4]);
+                for (int i = 0; i < third.length; i++) {
+                    third[i].setForeground(Color.WHITE);
+                    list.add(third[i]);
+                    if (i != third.length - 1)
+                        list.add(info[i]);
+                }
+                JLabel sl = new JLabel(tmp[5]);
+                if (tmp[5].equals("Long")) 
+                    sl.setForeground(greenp);
+                else
+                    sl.setForeground(redp);
+                list.add(sl);
+                list.add(info[2]);
+                JLabel price = new JLabel(tmp[7]);
+                price.setForeground(Color.WHITE);
+                list.add(price);
+                list.add(info[3]);
+                JLabel market = new JLabel(tmp[9]);
+                market.setForeground(greenp);
+                list.add(market);
+                list.add(info[4]);
+                JLabel pnl = new JLabel(tmp[11]);
+                pnl.setForeground(greenp);
+                list.add(pnl);
+                JLabel cancel = new JLabel(cnc);
+                list.add(cancel);
+                final JLabel indexof = new JLabel(Integer.toString(index));
+                list.add(indexof);
+                cancel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        setBalance(Integer.parseInt(indexof.getText()));
+                        order.remove(Integer.parseInt(indexof.getText()));
+                        reDisplay(0, Integer.parseInt(indexof.getText()), 0);
+                        writeBalance();
+                        writeOrder();
+                        index--;
+                    }
+                });
+                index++;
+                cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                for (int i = 0; i < list.size(); i++)
+                    list.get(i).setFont(new Font("Arial", Font.BOLD, 14));;
+                displayOrder(list);
+                order.add(list);   
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeOrder() {
+        try (BufferedWriter fw = new BufferedWriter(new FileWriter("src/main/java/data/order.txt", false))) {
+            for (int i = 0; i < order.size(); i++) {
+                for (int j = 0; j < order.get(i).size(); j++) {
+                    fw.write(order.get(i).get(j).getText() + "/");
+                }
+                fw.newLine();
+            }
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+    }
+
+    public void setBalance(int i) {
+        double pl =  Double.parseDouble(order.get(i).get(order.get(i).size() - 3).getText().replaceAll("[$+]", ""));
+        double amount = Double.parseDouble(order.get(i).get(2).getText().replace("$", ""));
+        double res = Math.round((balance += (amount + pl))*100);
+        lbalance.setText("Balance : " + res/100 + " $");
+    }
+
+    public void setOrder(String str) {
+        List<JLabel> list = new ArrayList<JLabel>();
+        JLabel[] third = new JLabel[3];
+        JLabel[] info = new JLabel[5];
+        info[0] = new JLabel("| Amount :");
+        info[1] = new JLabel("| Leverage :");
+        info[2] = new JLabel("| Position :");
+        info[3] = new JLabel("| Market :");
+        info[4] = new JLabel("| P&L :");
+        for (int i = 0; i < info.length; i++)
+            info[i].setForeground(gay);
+        third[0] = new JLabel(symbol.getSelectedItem().toString());
+        third[1] = new JLabel(amount.getText() + " $");
+        third[2] = new JLabel(valueLeverage.getText());
+        for (int i = 0; i < third.length; i++) {
+            third[i].setForeground(Color.WHITE);
+            list.add(third[i]);
+            if (i != third.length - 1)
+                list.add(info[i]);
+        }
+        JLabel sl = new JLabel(str);
+        if (str.equals("Long")) 
+            sl.setForeground(greenp);
+        else
+            sl.setForeground(redp);
+        list.add(sl);
+        list.add(info[2]);
+        JLabel price = new JLabel(coin.getText());
+        price.setForeground(Color.WHITE);
+        list.add(price);
+        list.add(info[3]);
+        JLabel market = new JLabel(coin.getText());
+        market.setForeground(greenp);
+        list.add(market);
+        list.add(info[4]);
+        JLabel pnl = new JLabel("0.0");
+        pnl.setForeground(greenp);
+        list.add(pnl);
+        JLabel cancel = new JLabel(cnc);
+        list.add(cancel);
+        final JLabel indexof = new JLabel(Integer.toString(index));
+        list.add(indexof);
+        cancel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                setBalance(Integer.parseInt(indexof.getText()));
+                order.remove(Integer.parseInt(indexof.getText()));
+                reDisplay(0, Integer.parseInt(indexof.getText()), 0);
+                writeBalance();
+                writeOrder();
+                index--;
+            }
+          });
+        index++;
+        cancel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        for (int i = 0; i < list.size(); i++)
+            list.get(i).setFont(new Font("Arial", Font.BOLD, 14));;
+        displayOrder(list);
+        order.add(list);
     }
 
     public List<JComponent> getComp() {
@@ -313,10 +457,16 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         Btrading.setForeground(Color.DARK_GRAY);
         Bmarket.setFocusPainted(false);
         Btrading.setFocusPainted(false);
+        error.setFont(new Font("Arial", Font.BOLD, 14));
+        error.setForeground(redp);
+        error.setVisible(false);
         Menu.add(Bmarket);
         Menu.add(Btrading);
+        Menu.add(error);
         Bmarket.addActionListener(this);
         Btrading.addActionListener(this);
+        error.setFont(new Font("Arial", Font.BOLD, 14));
+
     }
 
     public void setFrame() {
@@ -358,6 +508,106 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
         MarketFrame.setVisible(true);
     }
 
+    public void setTradingFrame() {
+        /* set Panels for TradingFrame */
+        TradingFrame.setLayout(new BorderLayout());
+        TradingFrame.setBackground(Color.BLACK);
+        TradingFrame.setVisible(false);
+        pnTrading[0] = new JPanel();
+        pnTrading[0].setBackground(Color.BLACK);
+        pnTrading[0].setLayout(new BorderLayout());
+        Border pn0border = BorderFactory.createMatteBorder(0, 0, 0, 3, Color.LIGHT_GRAY);
+        pnTrading[0].setBorder(pn0border);
+
+            /* Order panel */
+        pnTrading[1] = new JPanel();
+        pnTrading[1].setBackground(Color.BLACK);
+        pnTrading[1].setLayout(new GridBagLayout());
+        Border border = BorderFactory.createLineBorder(Color.BLACK, 5);
+        GridBagConstraints c = new GridBagConstraints();
+        JScrollPane scrollPane = new JScrollPane(pnTrading[1]);
+        scrollPane.setBackground(Color.BLACK);
+        scrollPane.setBorder(border);
+        pnTrading[0].add(scrollPane, BorderLayout.CENTER);
+
+            /* Resume panel */
+        pnTrading[2] = new JPanel();
+        pnTrading[2].setBackground(Color.BLACK);
+        Border pn2border = BorderFactory.createMatteBorder(3, 0, 0, 0, Color.LIGHT_GRAY);
+        pnTrading[2].setBorder(pn2border);
+        pnl.setFont(new Font("Arial", Font.PLAIN, 20));
+        pnl.setForeground(Color.WHITE);
+        pnTrading[2].add(pnl);
+        pnTrading[0].add(pnTrading[2], BorderLayout.SOUTH);
+
+            /* Add pn[1&2] to TradingFrame */
+        TradingFrame.add(pnTrading[0], BorderLayout.CENTER);
+
+            /* placeOrder panel */
+        pnTrading[3] = new JPanel(new GridBagLayout());
+        pnTrading[3].setBackground(Color.BLACK);
+        //symbol
+        symbol.setForeground(Color.BLACK);
+        symbol.setBackground(Color.WHITE);
+        symbol.setFocusable(false);
+        //coin
+        coin.setIconTextGap(10);
+        coin.setFont(new Font("Arial", Font.BOLD, 15));
+        coin.setForeground(greenp);
+        coin.setIcon(Tradingimg.get(symbol.getSelectedIndex()));
+        coin.setText(coins[symbol.getSelectedIndex()].getText());
+        //leverage
+        leverage.setForeground(gay);
+        leverage.setBackground(Color.WHITE);
+        //valueLeverage
+        valueLeverage.setForeground(Color.WHITE);
+        //amount
+        amount.setText("Amount in $");
+        amount.setForeground(Color.BLACK);
+        amount.setBackground(Color.WHITE);
+        amount.setFont(new Font("Arial", Font.PLAIN, 14));
+        amount.setMinimumSize(new Dimension(amount.getPreferredSize()));
+        amount.setHorizontalAlignment(JTextField.CENTER);
+        //long
+        Longit.setForeground(Color.BLACK);
+        Longit.setBackground(new Color(144, 238, 144));
+        //short
+        Shortit.setForeground(Color.BLACK);
+        Shortit.setBackground(new Color(255, 127, 127));
+        //balance
+        lbalance.setFont(new Font("Arial", Font.BOLD, 16));
+        lbalance.setForeground(Color.WHITE);
+
+        c.gridwidth = 1;
+        c.gridheight = 1;
+        c.weightx = 2;
+        c.weighty = 2;
+
+        c.fill = GridBagConstraints.VERTICAL;
+        for (int i = 0; i < components.size(); i++) {
+            c.insets = new Insets(25, 20, 25, 20);
+            if (components.get(i) == leverage)
+                c.insets = new Insets(25, 20, 0, 20);
+            if (components.get(i) == valueLeverage)
+                c.insets = new Insets(0, 20, 25, 20);
+            c.gridy = i;
+            pnTrading[3].add(components.get(i), c);
+        }
+
+        TradingFrame.add(pnTrading[3], BorderLayout.EAST);
+
+        symbol.addActionListener(this);
+        leverage.addChangeListener(this);
+        amount.addFocusListener(this);
+        Longit.addActionListener(this);
+        Shortit.addActionListener(this);
+    }
+
+    public void cancelOrder() {
+        System.out.println(order);
+        //order.remove(ABORT)
+    }
+
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == Bmarket) {
@@ -383,37 +633,27 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
             coin.setText(coins[symbol.getSelectedIndex()].getText());
         }
         if (e.getSource() == Longit) {
-            System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Long");
             if (Double.parseDouble(amount.getText()) > balance)
                 amount.setBackground(redp);
             else {
                 amount.setBackground(Color.WHITE);
-                balance -= Double.parseDouble(amount.getText());
-                lbalance.setText("Balance : " + balance);
-                lorder.add(new order(symbol.getSelectedItem().toString(),
-                    Double.parseDouble(amount.getText()),
-                    Integer.parseInt(valueLeverage.toString()),
-                    "Long",
-                    Double.parseDouble(coin.getText()),
-                    Double.parseDouble(coin.getText()),
-                    0));
+                balance = Math.round((balance - Double.parseDouble(amount.getText()))*100);
+                balance = balance/100;
+                setOrder("Long");
+                writeOrder();
+                lbalance.setText("Balance : " + balance + " $");
             }
         }
         if (e.getSource() == Shortit) {
-            System.out.println(symbol.getSelectedItem() + " " + valueLeverage.getText().replace("x", "") + " " + amount.getText() + " " + "Short");
             if (Double.parseDouble(amount.getText()) > balance)
                 amount.setBackground(redp);
             else {
                 amount.setBackground(Color.WHITE);
-                balance -= Double.parseDouble(amount.getText());
-                lbalance.setText("Balance : " + balance);
-                lorder.add(new order(symbol.getSelectedItem().toString(),
-                    Double.parseDouble(amount.getText()),
-                    Integer.parseInt(valueLeverage.toString()),
-                    "Short",
-                    Double.parseDouble(coin.getText()),
-                    Double.parseDouble(coin.getText()),
-                    0));
+                balance = Math.round((balance - Double.parseDouble(amount.getText()))*100);
+                balance = balance/100;
+                setOrder("Short");
+                writeOrder();
+                lbalance.setText("Balance : " + balance + " $");
             }
         }
     }
@@ -438,37 +678,12 @@ public class frame extends JFrame implements ActionListener, ChangeListener, Foc
                 amount.setText("Amount in $");
         }
     }
-}
 
-class order {
-    String crypto;
-    double amount;
-    int leverage;
-    String sl;
-    double price;
-    double market;
-    double pnl;
-    JLabel res = new JLabel();
-
-    public order(String crypto, double amount, int leverage, String sl, double price, double market, double pnl) {
-        this.crypto = crypto;
-        this.amount = amount;
-        this.leverage = leverage;
-        this.sl = sl;
-        this.price = price;
-        this.market = market;
-        this.pnl = pnl;
-    }
-
-    /*public JLabel getLabel() {
-        if (sl.equals("Long")) {
-            pnl = (price - market) * ((amount/price) * leverage) * 1;
-            res.setText(crypto + " " + amount + " x" + leverage + " " + sl + " " + price + " " + market + " " + pnl);
-        }
-        else {
-            pnl = (market - price) * ((amount/price) * leverage) * 1;
-            res.setText(crypto + " " + amount + " x" + leverage + " " + sl + " " + price + " " + market + " " + pnl);
-        }
-        return res;
-    }*/
+    public void mouseClicked(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {}
+    public void mouseDragged(MouseEvent e) {}
+    public void mouseMoved(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {}
 }
