@@ -1,4 +1,4 @@
-A simply program to track six cryptocurrencies. I also made a function that reproduice the behavior of "future".
+A program to track six cryptocurrencies. I also made a function that reproduice the behavior of "future".
 You can gamble on the market by hitting long or short if you think the pair will go up or down.
 
 ======
